@@ -11,6 +11,7 @@ type TaxIncludedPriceJob struct {
 	TaxRate           float64
 	InputPrices       []float64
 	TaxIncludedPrices map[string]string
+	IoMnanager        filemanager.FileManager
 }
 
 func (job *TaxIncludedPriceJob) LoadDate() {
@@ -23,7 +24,7 @@ func (job *TaxIncludedPriceJob) LoadDate() {
 	// scanner := bufio.NewScanner(file)
 
 	// var lines []string
-	lines, err := filemanager.ReadLines("prices.txt")
+	lines, err := job.IoMnanager.ReadLines()
 
 	if err != nil {
 		fmt.Println("Reading the file content failed!", err)
@@ -71,7 +72,7 @@ func (job *TaxIncludedPriceJob) Process() {
 	}
 
 	job.TaxIncludedPrices = result
-	err := filemanager.WriteJSON(fmt.Sprintf("result%v.json", job.TaxRate*100), job)
+	err := job.IoMnanager.WriteJSON(job)
 	if err != nil {
 
 		fmt.Println("saving failed")
@@ -79,11 +80,12 @@ func (job *TaxIncludedPriceJob) Process() {
 
 }
 
-func NewTaxIncludedPriceJob(taxRate float64) *TaxIncludedPriceJob {
+func NewTaxIncludedPriceJob(fm filemanager.FileManager, taxRate float64) *TaxIncludedPriceJob {
 
 	return &TaxIncludedPriceJob{
 		InputPrices: []float64{10.0, 20.0, 30.0},
 		TaxRate:     taxRate,
+		IoMnanager:  fm,
 	}
 
 }
