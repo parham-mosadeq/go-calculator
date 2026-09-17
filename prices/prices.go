@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 )
 
 type TaxIncludedPriceJob struct {
@@ -12,7 +13,7 @@ type TaxIncludedPriceJob struct {
 	TaxIncludedPrices map[string]float64
 }
 
-func (job TaxIncludedPriceJob) LoadDate() {
+func (job *TaxIncludedPriceJob) LoadDate() {
 	file, err := os.Open("prices.txt")
 	if err != nil {
 		fmt.Println("Reading file failed!", err)
@@ -34,16 +35,31 @@ func (job TaxIncludedPriceJob) LoadDate() {
 		return
 	}
 
-}
+	prices := make([]float64, len(lines))
 
-func (job TaxIncludedPriceJob) Process() {
-	result := make(map[string]float64)
+	for lIdx, lVal := range lines {
+		floatPrice, err := strconv.ParseFloat(lVal, 64)
+		if err != nil {
+			file.Close()
+			fmt.Println("Reading prices failed", err)
+		}
 
-	for _, pVal := range job.InputPrices {
-		result[fmt.Sprint("%.2f", pVal)] = pVal * (1 + job.TaxRate)
+		prices[lIdx] = floatPrice
 	}
 
-	fmt.Println("Processed tax rates & prices", result)
+	job.InputPrices = prices
+}
+
+func (job *TaxIncludedPriceJob) Process() {
+	job.LoadDate()
+	result := make(map[string]string)
+
+	for _, pVal := range job.InputPrices {
+		taxIncludedPrice := pVal * (1 + job.TaxRate)
+		result[fmt.Sprintf("%.2f", pVal)] = fmt.Sprintf("%.2f", taxIncludedPrice)
+	}
+
+	fmt.Println("Processed tax rates and prices = ", result)
 }
 
 func NewTaxIncludedPriceJob(taxRate float64) *TaxIncludedPriceJob {
